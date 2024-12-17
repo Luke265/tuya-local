@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "incremental": true,
+    "rootDir": ".",
+    "module": "commonjs",
+    "target": "es2021",
+    "types": ["node"],
+    "importHelpers": false
+  },
+  "files": ["tools/deploy.ts"]
+}

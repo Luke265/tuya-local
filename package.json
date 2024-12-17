@@ -1,0 +1,66 @@
+{
+  "name": "@tuya-local/source",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {},
+  "private": true,
+  "dependencies": {
+    "debug": "^4.4.0",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@nx/esbuild": "20.2.2",
+    "@nx/eslint": "20.2.2",
+    "@nx/eslint-plugin": "20.2.2",
+    "@nx/jest": "20.2.2",
+    "@nx/js": "20.2.2",
+    "@swc-node/register": "~1.10.9",
+    "@swc/core": "~1.10.1",
+    "@swc/helpers": "~0.5.15",
+    "@types/debug": "^4.1.12",
+    "@types/jest": "^29.5.14",
+    "@types/node": "22.10.2",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "jest": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
+    "nx": "20.2.2",
+    "prettier": "^3.4.2",
+    "ts-jest": "^29.2.5",
+    "ts-node": "10.9.2",
+    "tslib": "^2.8.1",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.18.1"
+  },
+  "nx": {
+    "includedScripts": [],
+    "targets": {
+      "build-deploy": {
+        "executor": "@nx/esbuild:esbuild",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "options": {
+          "outputPath": "tools/dist",
+          "main": "tools/deploy.ts",
+          "tsConfig": "tsconfig.tools.json",
+          "platform": "node",
+          "bundle": false,
+          "esbuildOptions": {
+            "outExtension": {
+              ".js": ".mjs"
+            }
+          }
+        }
+      },
+      "deploy": {
+        "dependsOn": [
+          "build-deploy"
+        ],
+        "command": "node tools/dist/deploy.mjs"
+      }
+    }
+  }
+}

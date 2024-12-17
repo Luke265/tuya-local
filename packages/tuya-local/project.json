@@ -1,0 +1,32 @@
+{
+  "name": "tuya-local",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/tuya-local/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/tuya-local/dist",
+        "main": "packages/tuya-local/src/index.ts",
+        "tsConfig": "packages/tuya-local/tsconfig.lib.json",
+        "platform": "node",
+        "bundle": false
+      }
+    },
+    "test:watch": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/packages/tuya-local"],
+      "options": {
+        "jestConfig": "packages/tuya-local/jest.config.ts",
+        "watch": true
+      }
+    },
+    "build-release": {
+      "dependsOn": ["build"],
+      "command": "tsc --project packages/tuya-local/tsconfig.lib.json --emitDeclarationOnly --outDir packages/tuya-local/dist"
+    }
+  }
+}
