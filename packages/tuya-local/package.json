@@ -1,0 +1,19 @@
+{
+  "name": "@luke265/tuya-local",
+  "version": "0.0.1",
+  "module": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "dependencies": {
+    "debug": ">=4.0.0",
+    "rxjs": ">=7.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ]
+}
