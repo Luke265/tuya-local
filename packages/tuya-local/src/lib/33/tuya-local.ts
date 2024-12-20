@@ -1,7 +1,7 @@
-import { MessageParser } from './message-parser';
-import { TuyaCipher } from './cipher';
-import { TuyaLocalBase } from '../tuya-local-base';
-import { Options } from '../types';
+import { MessageParser } from './message-parser.js';
+import { TuyaCipher } from './cipher.js';
+import { TuyaLocalBase } from '../tuya-local-base.js';
+import { Options } from '../types.js';
 
 export class TuyaLocal extends TuyaLocalBase {
   protected override cipher: TuyaCipher;

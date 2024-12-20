@@ -1,4 +1,4 @@
-import { ITuyaLocal, Options } from './types';
+import { ITuyaLocal, Options } from './types.js';
 import { TuyaLocal as TuyaLocal33 } from './33/tuya-local.js';
 import { TuyaLocal as TuyaLocal34 } from './34/tuya-local.js';
 

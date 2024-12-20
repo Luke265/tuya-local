@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
-import { hmac } from '../util';
-import { ITuyaCipher } from '../types';
+import { hmac } from '../util.js';
+import { ITuyaCipher } from '../types.js';
 
 export class TuyaCipher implements ITuyaCipher {
   constructor(public key: Buffer) {}

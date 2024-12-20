@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import type { Command } from './command-type';
+import type { Command } from './command-type.js';
 
 export type TuyaVersion = '3.1' | '3.2' | '3.3' | '3.4' | '3.5';
 
