@@ -1,9 +1,9 @@
-import { CommandType, CommandTypeReverse } from '../command-type';
-import { crc32 } from '../crc';
-import { debug } from '../debug';
-import { EncodeOptions, IMessageParser, Packet } from '../types';
-import { normalizePayload } from '../util';
-import { TuyaCipher } from './cipher';
+import { CommandType, CommandTypeReverse } from '../command-type.js';
+import { crc32 } from '../crc.js';
+import { debug } from '../debug.js';
+import { EncodeOptions, IMessageParser, Packet } from '../types.js';
+import { normalizePayload } from '../util.js';
+import { TuyaCipher } from './cipher.js';
 
 const HEADER_SIZE = 16;
 

@@ -1,7 +1,7 @@
 import EventEmitter from 'node:events';
 import net from 'node:net';
-import { Command } from './command-type';
-import { Deferred, deferred } from './util';
+import { Command } from './command-type.js';
+import { Deferred, deferred } from './util.js';
 import {
   exhaustMap,
   filter,
@@ -19,7 +19,7 @@ import {
   ITuyaLocal,
   Options,
   Packet,
-} from './types';
+} from './types.js';
 import { debug } from './debug.js';
 
 export interface RefreshOptions {}

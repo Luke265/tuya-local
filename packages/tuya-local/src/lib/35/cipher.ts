@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { ITuyaCipher } from '../types';
+import { ITuyaCipher } from '../types.js';
 
 export class TuyaCipher implements ITuyaCipher {
   constructor(public key: Buffer) {}
