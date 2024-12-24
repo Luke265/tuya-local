@@ -1,6 +1,13 @@
 import { TuyaLocalBase } from '../lib/tuya-local-base';
+import { IMessageParser, ITuyaCipher } from '../lib/types';
 
-class TuyaLocal extends TuyaLocalBase {}
+class TuyaLocal extends TuyaLocalBase {
+  protected override parser!: IMessageParser;
+  protected override cipher!: ITuyaCipher;
+  override dps(): Promise<Record<string, unknown>> {
+    throw new Error('Method not implemented.');
+  }
+}
 it('constructor throws error if key is invalid', () => {
   expect(() => {
     new TuyaLocal({

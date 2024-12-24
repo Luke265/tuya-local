@@ -27,4 +27,16 @@ export class TuyaLocal extends TuyaLocalBase {
     const response = await this.sendWithResponse('DP_QUERY', payload);
     return (response.payload as { dps: Record<string, unknown> }).dps;
   }
+
+  override async sendPing(): Promise<boolean> {
+    try {
+      await this.send('HEART_BEAT', Buffer.allocUnsafe(0));
+      // version 3.3 does not respect sequenceN for HEART_BEAT packet
+      await this.forPacket((packet) => packet.command === 'HEART_BEAT');
+    } catch (e) {
+      this.onError(e);
+      return false;
+    }
+    return true;
+  }
 }
