@@ -6,6 +6,7 @@ import { normalizePayload } from '../util.js';
 import { TuyaCipher } from './cipher.js';
 
 const HEADER_SIZE = 16;
+const VERSION = Buffer.from('3.3');
 
 export class MessageParser implements IMessageParser {
   constructor(private readonly cipher: TuyaCipher) {}
@@ -19,7 +20,7 @@ export class MessageParser implements IMessageParser {
     if (options.command !== 'DP_QUERY' && options.command !== 'DP_REFRESH') {
       // Add 3.3 header
       const buffer = Buffer.alloc(payload.length + 15);
-      Buffer.from('3.3').copy(buffer, 0);
+      VERSION.copy(buffer, 0);
       payload.copy(buffer, 15);
       payload = buffer;
     }
@@ -40,7 +41,7 @@ export class MessageParser implements IMessageParser {
     // Add payload, crc, and suffix
     payload.copy(buffer, 16);
     const calculatedCrc =
-      crc32(buffer.slice(0, payload.length + 16)) & 0xffffffff;
+      crc32(buffer.subarray(0, payload.length + 16)) & 0xffffffff;
 
     buffer.writeInt32BE(calculatedCrc, payload.length + 16);
     buffer.writeUInt32BE(0x0000aa55, payload.length + 20);
@@ -50,9 +51,9 @@ export class MessageParser implements IMessageParser {
   decode(buffer: Buffer): Packet[] {
     const packets: Packet[] = [];
     let inputBuffer: Buffer | null = buffer;
-    while (inputBuffer) {
+    while (inputBuffer && inputBuffer.length > 0) {
       const { leftover, command, payload, sequenceN } =
-        this.parsePacket(buffer);
+        this.parsePacket(inputBuffer);
       inputBuffer = leftover;
       packets.push({
         command,
@@ -179,6 +180,13 @@ export class MessageParser implements IMessageParser {
    * an object or string.
    */
   private getPayload(data: Buffer): Buffer | unknown {
+    if (data.length === 0) {
+      return data;
+    }
+    // instead of using "includes" or "indexof" we compare subarray
+    if (data.subarray(0, 3).equals(VERSION)) {
+      data = data.subarray(15);
+    }
     const payload = this.cipher.decrypt(data);
     // if starts with '{' then this might be json
     if (payload.at(0) === 123) {

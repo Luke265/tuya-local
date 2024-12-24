@@ -63,9 +63,9 @@ export class MessageParser implements IMessageParser {
   decode(buffer: Buffer): Packet[] {
     const packets: Packet[] = [];
     let inputBuffer: Buffer | null = buffer;
-    while (inputBuffer) {
+    while (inputBuffer && inputBuffer.length > 0) {
       const { leftover, command, payload, sequenceN } =
-        this.parsePacket(buffer);
+        this.parsePacket(inputBuffer);
       inputBuffer = leftover;
       packets.push({
         command,
@@ -229,6 +229,9 @@ export class MessageParser implements IMessageParser {
    * an object or string.
    */
   private getPayload(data: Buffer): Buffer | unknown {
+    if (data.length === 0) {
+      return data;
+    }
     const payload = this.cipher.decrypt(data);
     // if starts with '{' then this might be json
     if (payload.at(0) === 123) {

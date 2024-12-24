@@ -6,11 +6,11 @@ import {
   exhaustMap,
   filter,
   firstValueFrom,
-  from,
   interval,
   Subject,
   Subscription,
   take,
+  throwError,
   timeout,
 } from 'rxjs';
 import {
@@ -38,7 +38,7 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
   protected client: net.Socket | null = null;
   protected abstract parser: IMessageParser;
   protected abstract cipher: ITuyaCipher;
-  protected currentSequenceN = 1;
+  protected currentSequenceN = 0;
   protected readonly options: Options;
   private readonly _packet$ = new Subject<Packet>();
   public readonly packet$ = this._packet$.asObservable();
@@ -58,7 +58,10 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
       return this.connectDeferred.promise;
     }
     if (this.client) {
-      return Promise.resolve();
+      if (this.client.destroyed) {
+        throw new Error('destroyed');
+      }
+      return;
     }
     this.connectDeferred = deferred();
     this.client = new net.Socket();
@@ -76,17 +79,17 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
         debug(data.toString('hex'));
       }
       try {
-        this.parser?.decode(data).forEach((packet) => {
+        this.parser.decode(data).forEach((packet) => {
           if (debug.enabled) {
             debug('Parsed:');
             debug(packet);
           }
           this._packet$.next(packet);
-          this.onPacket(packet);
           this.emit('packet', packet);
         });
       } catch (e) {
         this._packet$.error(e);
+        this.emit('error', e);
       }
     });
     this.client.on('close', () => {
@@ -121,25 +124,35 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
   }
 
   disconnect() {
+    if (this._packet$.closed) {
+      return;
+    }
     this.hearBeatSub?.unsubscribe();
     this.hearBeatSub = null;
     this.client?.destroy();
-    this.client = null;
     this.connected = false;
-    this.emit('disconnected');
     this._packet$.complete();
     this._connected$.complete();
+    this.emit('disconnected');
   }
 
   send(command: Command, data: Buffer | string | object) {
     if (!this.client || !this.parser) {
       throw new Error('Not connected');
     }
+    const sequenceN = ++this.currentSequenceN;
+    if (debug.enabled) {
+      debug('Send', {
+        data,
+        command,
+        sequenceN,
+      });
+    }
     return this.write(
       this.parser.encode({
         data,
         command,
-        sequenceN: ++this.currentSequenceN,
+        sequenceN,
       }),
     );
   }
@@ -149,13 +162,21 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
     data: Buffer | string | object,
     options?: {
       responseCommand?: Command;
+      sequenceN?: number;
       timeout?: number;
     },
   ): Promise<Packet> {
     if (!this.client || !this.parser) {
       throw new Error('Not connected');
     }
-    const sequenceN = ++this.currentSequenceN;
+    const sequenceN = options?.sequenceN ?? ++this.currentSequenceN;
+    if (debug.enabled) {
+      debug('Send', {
+        data,
+        command,
+        sequenceN,
+      });
+    }
     await this.write(
       this.parser.encode({
         data,
@@ -163,25 +184,36 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
         sequenceN,
       }),
     );
-    const response = await firstValueFrom(
+    const response = await this.forPacket(
+      (packet) =>
+        packet.sequenceN === sequenceN &&
+        (packet.command === command ||
+          packet.command === options?.responseCommand),
+    );
+    return response;
+  }
+
+  protected forPacket(
+    predicate: (value: Packet) => boolean,
+    timeoutMs?: number,
+  ) {
+    return firstValueFrom(
       this.packet$.pipe(
-        filter(
-          (packet) =>
-            packet.sequenceN === sequenceN ||
-            packet.command === options?.responseCommand,
-        ),
-        timeout(options?.timeout ?? this.options.responseTimeout ?? 1000),
+        filter(predicate),
+        timeout({
+          each: timeoutMs ?? this.options.responseTimeout ?? 1000,
+          with: () => throwError(() => new Error('Timeout')),
+        }),
         take(1),
       ),
     );
-    return response;
   }
 
   async sendPing() {
     try {
       await this.sendWithResponse('HEART_BEAT', Buffer.allocUnsafe(0));
     } catch (e) {
-      this.disconnect();
+      this.onError(e);
       return false;
     }
     return true;
@@ -191,18 +223,18 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
 
   protected async onConnect(client: net.Socket) {}
 
-  protected async onPacket(packet: Packet) {}
-
-  private onError(e: unknown) {
+  protected onError(e: unknown) {
     this.connectDeferred?.reject(e);
     this.connectDeferred = null;
+    this._packet$.error(e);
+    this._connected$.error(e);
     this.disconnect();
     this.emit('error', e);
   }
 
   private setupHeartBeat() {
-    this.hearBeatSub = interval(this.options.heartBeatInterval ?? 5_000)
-      .pipe(exhaustMap(() => from(this.sendPing())))
+    this.hearBeatSub = interval(this.options.heartBeatInterval ?? 10_000)
+      .pipe(exhaustMap(this.sendPing.bind(this)))
       .subscribe();
   }
 

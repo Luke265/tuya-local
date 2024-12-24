@@ -32,12 +32,10 @@ export class TuyaLocal extends TuyaLocalBase {
     // Negotiate session key then emit 'connected'
     // 16 bytes random + 32 bytes hmac
     const tmpLocalKey = crypto.randomBytes(16);
-    const packet = await this.sendWithResponse(
-      'SESS_KEY_NEG_START',
-      tmpLocalKey,
-      {
-        responseCommand: 'SESS_KEY_NEG_RES',
-      },
+    await this.send('SESS_KEY_NEG_START', tmpLocalKey);
+    // SESS_KEY_NEG_RES provides new sequence
+    const packet = await this.forPacket(
+      (packet) => packet.command === 'SESS_KEY_NEG_RES',
     );
     if (debug.enabled) {
       debug('Protocol 3.4, 3.5: Negotiate Session Key - Send Msg 0x03');
