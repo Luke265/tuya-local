@@ -37,29 +37,8 @@
   "nx": {
     "includedScripts": [],
     "targets": {
-      "build-deploy": {
-        "executor": "@nx/esbuild:esbuild",
-        "outputs": [
-          "{options.outputPath}"
-        ],
-        "options": {
-          "outputPath": "tools/dist",
-          "main": "tools/deploy.ts",
-          "tsConfig": "tsconfig.tools.json",
-          "platform": "node",
-          "bundle": false,
-          "esbuildOptions": {
-            "outExtension": {
-              ".js": ".mjs"
-            }
-          }
-        }
-      },
       "deploy": {
-        "dependsOn": [
-          "build-deploy"
-        ],
-        "command": "node tools/dist/deploy.mjs"
+        "command": "node tools/deploy.mts"
       }
     }
   }

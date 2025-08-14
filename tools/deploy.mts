@@ -1,4 +1,4 @@
-import childProcess, { ExecOptions } from 'child_process';
+import childProcess, { type ExecOptions } from 'child_process';
 
 const host = process.env.PUBLISH_HOST;
 const remoteDir = process.env.PUBLISH_DIR;

@@ -6,7 +6,9 @@
     "module": "commonjs",
     "target": "es2021",
     "types": ["node"],
-    "importHelpers": false
+    "noEmit": true,
+    "importHelpers": false,
+    "erasableSyntaxOnly": true
   },
   "files": ["tools/deploy.ts"]
 }
