@@ -57,10 +57,10 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
     if (this.connectDeferred) {
       return this.connectDeferred.promise;
     }
-    if (this.client) {
-      if (this.client.destroyed) {
-        throw new Error('destroyed');
-      }
+    if (this._packet$.closed) {
+      throw new Error('destroyed');
+    }
+    if (this.client && !this.client.destroyed) {
       return;
     }
     this.connectDeferred = deferred();
@@ -80,6 +80,9 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
       }
       try {
         this.parser.decode(data).forEach((packet) => {
+          if (packet.sequenceN > this.currentSequenceN) {
+            this.currentSequenceN = packet.sequenceN;
+          }
           if (debug.enabled) {
             debug('Parsed:');
             debug(packet);
@@ -124,9 +127,6 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
   }
 
   disconnect() {
-    if (this._packet$.closed) {
-      return;
-    }
     this.hearBeatSub?.unsubscribe();
     this.hearBeatSub = null;
     this.client?.destroy();
@@ -186,9 +186,8 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
     );
     const response = await this.forPacket(
       (packet) =>
-        packet.sequenceN === sequenceN &&
-        (packet.command === command ||
-          packet.command === options?.responseCommand),
+        packet.command === command ||
+        packet.command === options?.responseCommand,
     );
     return response;
   }
@@ -239,6 +238,7 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
   }
 
   private setupHeartBeat() {
+    this.hearBeatSub?.unsubscribe();
     this.hearBeatSub = interval(this.options.heartBeatInterval ?? 10_000)
       .pipe(exhaustMap(this.sendPing.bind(this)))
       .subscribe();
