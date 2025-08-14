@@ -1,6 +1,6 @@
 {
   "name": "@luke265/tuya-local",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "type": "module",
   "module": "./dist/index.js",
   "typings": "./dist/index.d.ts",
@@ -9,9 +9,7 @@
     "rxjs": ">=7.0.0"
   },
   "exports": {
-    ".": {
-      "import": "./dist/index.js"
-    }
+    ".": "./dist/index.js"
   },
   "files": [
     "dist",
