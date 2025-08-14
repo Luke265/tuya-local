@@ -193,27 +193,32 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
     return response;
   }
 
-  protected forPacket(
+  protected async forPacket(
     predicate: (value: Packet) => boolean,
     timeoutMs?: number,
   ) {
-    return firstValueFrom(
-      this.packet$.pipe(
-        filter(predicate),
-        timeout({
-          each: timeoutMs ?? this.options.responseTimeout ?? 1000,
-          with: () => throwError(() => new Error('Timeout')),
-        }),
-        take(1),
-      ),
-    );
+    try {
+      return await firstValueFrom(
+        this.packet$.pipe(
+          filter(predicate),
+          timeout({
+            each: timeoutMs ?? this.options.responseTimeout ?? 1000,
+            with: () => throwError(() => new Error('Timeout')),
+          }),
+          take(1),
+        ),
+      );
+    } catch (cause) {
+      // easier to trace errors emitted from rxjs
+      throw new Error('Error when sending packet', { cause });
+    }
   }
 
   async sendPing() {
     try {
-      await this.sendWithResponse('HEART_BEAT', Buffer.allocUnsafe(0));
+      await this.send('HEART_BEAT', Buffer.allocUnsafe(0));
+      await this.forPacket(() => true);
     } catch (e) {
-      this.onError(e);
       return false;
     }
     return true;
