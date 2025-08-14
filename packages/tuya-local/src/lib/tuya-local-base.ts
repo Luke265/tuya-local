@@ -220,6 +220,7 @@ export abstract class TuyaLocalBase extends EventEmitter implements ITuyaLocal {
   }
 
   abstract dps(): Promise<Record<string, unknown>>;
+  abstract set(data: Record<string, string | number>): Promise<unknown>;
 
   protected async onConnect(client: net.Socket) {}
 

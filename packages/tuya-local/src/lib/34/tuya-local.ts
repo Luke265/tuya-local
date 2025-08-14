@@ -25,7 +25,37 @@ export class TuyaLocal extends TuyaLocalBase {
       uid: this.options.id,
     };
     const response = await this.sendWithResponse('DP_QUERY_NEW', payload);
-    return (response.payload as { dps: Record<string, unknown> }).dps;
+    if (
+      !!response.payload &&
+      typeof response.payload === 'object' &&
+      'dps' in response.payload
+    ) {
+      if (typeof response.payload.dps === 'object') {
+        const dps = response.payload.dps as Record<string, unknown> | undefined;
+        if (!dps) {
+          throw new Error('DPS not found');
+        }
+        return dps;
+      }
+    }
+    throw new Error('Invalid response');
+  }
+
+  override async set(dps: Record<string, string | number>) {
+    await this.connect();
+    const payload = {
+      data: {
+        ctype: 0,
+        gwId: this.options.gwId,
+        devId: this.options.id,
+        uid: '',
+        dps,
+      },
+      protocol: 5,
+      t: (Date.now() / 1000).toFixed(0),
+    };
+    const response = await this.sendWithResponse('CONTROL_NEW', payload);
+    return response.payload;
   }
 
   protected override async onConnect() {

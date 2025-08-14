@@ -41,6 +41,7 @@ export interface ITuyaLocal {
   readonly connected: boolean;
   connect(): Promise<void>;
   dps(): Promise<Record<string, unknown>>;
+  set(data: Record<string, unknown>): Promise<unknown>;
   disconnect(): void;
   sendWithResponse(
     command: Command,
